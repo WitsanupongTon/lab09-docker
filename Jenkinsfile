@@ -13,7 +13,7 @@ pipeline {
     parameters {
         booleanParam(
             name: 'CLEAN_VOLUMES',
-            defaultValue: true,
+            defaultValue: false,
             description: 'Remove volumes (clears database)'
         )
         string(
@@ -78,7 +78,7 @@ API_HOST=${params.API_HOST}
                     def downCommand = 'docker compose down'
                     if (params.CLEAN_VOLUMES) {
                         echo "WARNING: Removing volumes (database will be cleared)"
-                        downCommand = 'docker compose down -v'
+                        downCommand = 'docker compose down'
                     }
                     sh downCommand
 
