@@ -9,6 +9,7 @@ services:
       - "3306:3306"
     volumes:
       - mysqlDB:/var/lib/mysql
+      - ./emp.sql:/docker-entrypoint-initdb.d/emp.sql
     networks:
       - webnetwork
 

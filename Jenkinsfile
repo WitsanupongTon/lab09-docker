@@ -13,7 +13,7 @@ pipeline {
     parameters {
         booleanParam(
             name: 'CLEAN_VOLUMES',
-            defaultValue: true,
+            defaultValue: false,
             description: 'Remove volumes (clears database)'
         )
         string(
