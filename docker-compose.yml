@@ -5,6 +5,7 @@ services:
     container_name: db-mysql
     environment:
       MYSQL_ROOT_PASSWORD: cs2025416
+      MYSQL_DATABASE: demo
     ports:
       - "3306:3306"
     volumes:
