@@ -1,0 +1,62 @@
+services:
+
+  db:
+    image: mysql:latest
+    container_name: db-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: cs2025416
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqlDB:/var/lib/mysql
+    networks:
+      - webnetwork
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: db-mysql
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - webnetwork
+
+  express-api:
+    build:
+      context: ./backend        # ชี้ไปที่โฟลเดอร์ backend
+      dockerfile: dockerfile
+    container_name: express-api
+    ports:
+      - '3001:3001'
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db-mysql
+      DB_USER: root
+      DB_PASSWORD: cs2025416
+      DB_DATABASE: demo
+      DB_PORT: 3306
+    networks:
+      - webnetwork
+
+  web:
+    build:
+      context: ./frontend       # ชี้ไปที่โฟลเดอร์ frontend
+      dockerfile: dockerfile
+    container_name: next-frontend
+    ports:
+      - '3000:3000'
+    depends_on:
+      - express-api             # ให้ backend รันขึ้นมาก่อน
+    networks:
+      - webnetwork
+
+volumes:
+  mysqlDB:
+    name: mysqlDB
+    
+networks:
+  webnetwork:

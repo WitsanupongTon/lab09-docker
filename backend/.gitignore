@@ -1,0 +1,14 @@
+# Dependencies (ไลบรารีของ Node.js)
+node_modules/
+
+# VS Code config (การตั้งค่าของ VS Code)
+.vscode/
+
+# Logs (ไฟล์ Log ต่างๆ)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS System Files (ไฟล์ขยะของระบบปฏิบัติการ)
+.DS_Store
+Thumbs.db
