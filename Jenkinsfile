@@ -2,14 +2,12 @@ pipeline {
     agent any
 
     triggers {
-        // Poll SCM as fallback if webhook fails
+        // Poll SCM ทุกๆ 2 นาที
         pollSCM('H/2 * * * *')
     }
 
     environment {
-        // Build Information
         BUILD_TAG = "${env.BUILD_NUMBER}"
-        // Compute short commit inside a step (not inlined in env with sh)
     }
 
     parameters {
@@ -31,7 +29,6 @@ pipeline {
                 script {
                     echo "Checking out code..."
                     checkout scm
-                    // safe: compute commit here
                     env.GIT_COMMIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                     echo "Deploying to production environment"
                     echo "Build: ${BUILD_TAG}, Commit: ${env.GIT_COMMIT_SHORT}"
@@ -53,13 +50,8 @@ pipeline {
                 script {
                     echo "Preparing environment configuration..."
 
-                    // Load credentials from Jenkins (masked)
-                    withCredentials([
-                        string(credentialsId: 'MYSQL_ROOT_PASSWORD', variable: 'MYSQL_ROOT_PASS'),
-                        string(credentialsId: 'MYSQL_PASSWORD',      variable: 'MYSQL_PASS')
-                    ]) {
-                        // Safely write .env without using `sh` interpolation
-                        writeFile file: '.env', text: """\
+                    // สร้างไฟล์ .env สำหรับ Docker Compose
+                    writeFile file: '.env', text: """\
 MYSQL_ROOT_PASSWORD=cs2025416
 MYSQL_DATABASE=demo
 MYSQL_USER=root
@@ -73,9 +65,7 @@ NODE_ENV=production
 API_HOST=${params.API_HOST}
 """.stripIndent()
 
-                        // Avoid printing secrets
-                        echo ".env file created successfully"
-                    }
+                    echo ".env file created successfully"
                 }
             }
         }
@@ -85,7 +75,6 @@ API_HOST=${params.API_HOST}
                 script {
                     echo "Deploying to production using Docker Compose..."
 
-                    // Stop existing containers
                     def downCommand = 'docker compose down'
                     if (params.CLEAN_VOLUMES) {
                         echo "WARNING: Removing volumes (database will be cleared)"
@@ -93,7 +82,6 @@ API_HOST=${params.API_HOST}
                     }
                     sh downCommand
 
-                    // Build and start services
                     sh """
                         docker compose build --no-cache
                         docker compose up -d
@@ -102,7 +90,24 @@ API_HOST=${params.API_HOST}
                     echo "Deployment completed"
                 }
             }
-        
+        }
+
+        stage('Health Check') {
+            steps {
+                script {
+                    echo "Waiting for services to start..."
+                    sh 'sleep 15'
+
+                    echo "Performing health check..."
+
+                    sh """
+                        docker compose ps
+                        timeout 60 bash -c 'until curl -f http://localhost:3001/; do sleep 2; done' || exit 1
+                        echo "Health check passed!"
+                    """
+                }
+            }
+        }
 
         stage('Verify Deployment') {
             steps {
